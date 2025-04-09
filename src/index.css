@@ -23,6 +23,7 @@ body {
 }
 
 .timeline-dot {
+  fill: var(--mantine-color-bitcoin);
   @apply w-3 h-3 rounded-full cursor-pointer transition-all duration-200;
 }
 

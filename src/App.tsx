@@ -36,7 +36,7 @@ function App() {
             </div>
             <div className="flex items-center gap-4">
               <a 
-                href="https://github.com/your-username/bitcoin-timeline" 
+                href="https://github.com/Duzij/Bitcoin-Tracker" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -54,7 +54,7 @@ function App() {
         <div className="mb-8">
           <div className="relative rounded-xl overflow-hidden mb-6 h-64 md:h-80">
             <img 
-              src="https://images.unsplash.com/photo-1640679280345-55d95b7b961b?ixid=M3w3MjUzNDh8MHwxfHNlYXJjaHwxfHxiaXRjb2luJTIwY3J5cHRvY3VycmVuY3klMjBjaGFydCUyMGZpbmFuY2UlMjB0cmFkaW5nfGVufDB8fHx8MTc0Mzc5OTYxN3ww&ixlib=rb-4.0.3"
+              src="https://images.unsplash.com/photo-1640161704729-cbe966a08476?q=80&w=1472&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Cryptocurrency gold coin on red background"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />

@@ -10,7 +10,8 @@ export  interface BitcoinPrice {
 export interface NewsEvent {
   id: number;
   title: string;
-  summary: string;
+  content: string;
+  description: string;
   source: string;
   url: string;
   timestamp: string;
