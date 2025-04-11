@@ -79,6 +79,25 @@ const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   );
 };
 
+const ActiveCustomDot = (props: any) => {
+  const { cx, cy, payload } = props;
+
+  if (!cx || !cy) return null;
+
+  const hasNews = payload.has_news;
+  
+  return (
+    <Dot
+      cx={cx}
+      cy={cy}
+      r={hasNews ? 8 : 6}
+      strokeWidth={hasNews ? 2 : 0}
+      fill="#f7931a"
+      className={`timeline-dot`}
+    />
+  );
+}
+
 const CustomDot = (props: any) => {
   const { cx, cy, payload } = props;
 
@@ -90,7 +109,7 @@ const CustomDot = (props: any) => {
     <Dot
       cx={cx}
       cy={cy}
-      r={hasNews ? 7 : 4}
+      r={hasNews ? 7 : 5}
       strokeWidth={hasNews ? 2 : 0}
       className={`timeline-dot`}
     />
@@ -235,7 +254,7 @@ const PriceChart = ({ data }: PriceChartProps) => {
               dataKey="price"
               stroke="#f7931a"
               strokeWidth={2}
-              activeDot={{ r: 8 }}
+              activeDot={<ActiveCustomDot/>}
               dot={<CustomDot />}
             />
           </LineChart>
