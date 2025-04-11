@@ -4,6 +4,8 @@
 
 :root {
   --mantine-color-bitcoin: #f7931a;
+  --black: #000000;
+  --white: #ffffff;
 }
 
 body {
@@ -24,8 +26,16 @@ body {
 
 .timeline-dot {
   fill: var(--mantine-color-bitcoin);
-  @apply w-3 h-3 rounded-full cursor-pointer transition-all duration-200;
+  stroke: var(--black);
 }
+
+.dark {
+  .timeline-dot {
+    fill: var(--mantine-color-bitcoin);
+    stroke: var(--white);
+  }
+}
+
 
 .timeline-dot-with-news {
   @apply bg-bitcoin-primary hover:w-4 hover:h-4 hover:ring-2 hover:ring-bitcoin-primary hover:ring-opacity-50;

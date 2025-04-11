@@ -21,6 +21,7 @@ import {
   ExternalLink,
   TrendingUp,
 } from "lucide-react";
+import { useMantineTheme } from "@mantine/core";
 
 interface PriceChartProps {
   data: BitcoinPrice[];
@@ -84,16 +85,14 @@ const CustomDot = (props: any) => {
   if (!cx || !cy) return null;
 
   const hasNews = payload.has_news;
-
+  
   return (
     <Dot
       cx={cx}
       cy={cy}
-      r={hasNews ? 6 : 4}
-      fill={hasNews ? "#ccc" : "#f7931a"}
-      className={`timeline-dot ${
-        hasNews ? "timeline-dot-with-news" : "timeline-dot-without-news"
-      }`}
+      r={hasNews ? 7 : 4}
+      strokeWidth={hasNews ? 2 : 0}
+      className={`timeline-dot`}
     />
   );
 };

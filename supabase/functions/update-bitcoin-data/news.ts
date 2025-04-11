@@ -26,11 +26,6 @@ export async function fetchNews(
         }
       });
 
-      if (newArticles.length === 0) {
-        console.log("No new articles found. Stopping fetch attempts.");
-        break;
-      }
-
       pageSize += 2; // Increase pageSize for the next attempt
     }
 
@@ -48,14 +43,15 @@ async function fetchNewsFromAPI(
   priceId: number,
 ): Promise<NewsItem[]> {
   const date = timestamp.split("T")[0];
-  const dateMinus12h = new Date(
-    new Date(date).getTime() - 12 * 60 * 60 * 1000,
-  );
+
+  const dateMinusOneDay = new Date(
+    new Date(date).getTime() - 24 * 60 * 60 * 1000,
+  ).toISOString().split("T")[0];
 
   console.log(`Fetching news with pageSize: ${pageSize}`);
   const params = new URLSearchParams({
     q: "bitcoin",
-    from: dateMinus12h.toISOString(),
+    from: dateMinusOneDay,
     to: date,
     sortBy: "popularity",
     apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
