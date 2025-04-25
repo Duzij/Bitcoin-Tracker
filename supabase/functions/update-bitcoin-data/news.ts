@@ -7,9 +7,12 @@ export async function fetchNews(
   existingTitles: string[],
 ): Promise<NewsItem[]> {
   try {
-    const requiredNewsCount = percentChange > 6 ? 3 : 1;
+    const requiredNewsCount = percentChange > 5 ? 3 : 1;
     const fetchedNews: NewsItem[] = [];
     let pageSize = 1;
+    console.log(
+      `Fetching news for ${timestamp} with percent change: ${percentChange}`,
+    );
 
     while (fetchedNews.length < requiredNewsCount) {
       const newArticles = await fetchNewsFromAPI(
