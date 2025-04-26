@@ -41,17 +41,22 @@ export async function handleBitcoinPrice() {
             throw insertError;
         }
 
-        if (Math.abs(percentChange) > 3) {
-            const allExistingNewsTitles = await supabaseClient
-                .from("news_events")
-                .select("title");
+        const allExistingNewsTitles = await supabaseClient
+            .from("news_events")
+            .select("title");
 
-            const existingNewsTitles = allExistingNewsTitles?.data?.map((news) => news.title as string) || [];
+        const existingNewsTitles = allExistingNewsTitles?.data?.map((news) =>
+            news.title as string
+        ) || [];
 
-            const newsData = await fetchNews(timestamp, percentChange, priceId, existingNewsTitles);
-            if (newsData && newsData.length > 0) {
-                await supabaseClient.from("news_events").insert(newsData);
-            }
+        const newsData = await fetchNews(
+            timestamp,
+            percentChange,
+            priceId,
+            existingNewsTitles,
+        );
+        if (newsData && newsData.length > 0) {
+            await supabaseClient.from("news_events").insert(newsData);
         }
     }
 }

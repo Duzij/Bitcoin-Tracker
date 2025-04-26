@@ -7,7 +7,7 @@ export async function fetchNews(
   existingTitles: string[],
 ): Promise<NewsItem[]> {
   try {
-    const requiredNewsCount = percentChange > 5 ? 3 : 1;
+    const requiredNewsCount = Math.abs(percentChange) > 5 ? 3 : 1;
     const fetchedNews: NewsItem[] = [];
     let pageSize = 1;
     console.log(
