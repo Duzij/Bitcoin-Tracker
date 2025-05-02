@@ -5,9 +5,10 @@ export async function fetchNews(
   percentChange: number,
   priceId: number,
   existingTitles: string[],
+  lastPostedDate: string,
 ): Promise<NewsItem[]> {
   try {
-    const requiredNewsCount = Math.abs(percentChange) > 5 ? 3 : 1;
+    const requiredNewsCount = getRequiredNumber(percentChange, lastPostedDate);
     const fetchedNews: NewsItem[] = [];
     let pageSize = 1;
     console.log(
@@ -19,7 +20,7 @@ export async function fetchNews(
         timestamp,
         pageSize,
         existingTitles,
-        priceId
+        priceId,
       );
 
       // Add only unique articles to the fetchedNews list
@@ -37,6 +38,13 @@ export async function fetchNews(
     console.error(`Error fetching news for ${timestamp}:`, error);
     return [];
   }
+}
+
+function getRequiredNumber(percentChange: number, lastPostedDate: string): number {
+  // If the last posted date is more than 2 days are, we need to fetch 1
+  const isLastPostedTwoDaysAgo =
+    new Date(lastPostedDate).getTime() < Date.now() - 2 * 24 * 60 * 60 * 1000;
+  return Math.abs(percentChange) > 5 ? 3 : isLastPostedTwoDaysAgo ? 1 : 0;
 }
 
 async function fetchNewsFromAPI(
