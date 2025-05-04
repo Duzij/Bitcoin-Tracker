@@ -1,4 +1,5 @@
-import { NewsItem } from "./types.ts";
+import { determineSentiment } from "./helpers.ts";
+import { HeadlinerResponse, NewsItem, TopHeadlinersResponse } from "./types.ts";
 
 export async function fetchNews(
   timestamp: string,
@@ -8,16 +9,19 @@ export async function fetchNews(
   lastPostedDate: string,
 ): Promise<NewsItem[]> {
   try {
-    const requiredNewsCount = getRequiredNumber(percentChange, lastPostedDate);
+    const requiredNewsCount = getRequiredNumberOfArticles(
+      percentChange,
+      lastPostedDate,
+    );
     const fetchedNews: NewsItem[] = [];
     let pageSize = 1;
+
     console.log(
       `Fetching news for ${timestamp} with percent change: ${percentChange}`,
     );
 
     while (fetchedNews.length < requiredNewsCount) {
       const newArticles = await fetchNewsFromAPI(
-        timestamp,
         pageSize,
         existingTitles,
         priceId,
@@ -40,56 +44,50 @@ export async function fetchNews(
   }
 }
 
-function getRequiredNumber(percentChange: number, lastPostedDate: string): number {
-  // If the last posted date is more than 2 days are, we need to fetch 1
+// If the last posted date is more than 2 days are, we need to fetch 1
+function getRequiredNumberOfArticles(
+  percentChange: number,
+  lastPostedDate: string,
+): number {
   const isLastPostedTwoDaysAgo =
     new Date(lastPostedDate).getTime() < Date.now() - 2 * 24 * 60 * 60 * 1000;
   return Math.abs(percentChange) > 5 ? 3 : isLastPostedTwoDaysAgo ? 1 : 0;
 }
 
 async function fetchNewsFromAPI(
-  timestamp: string,
   pageSize: number,
   existingTitles: string[],
   priceId: number,
 ): Promise<NewsItem[]> {
-  const date = timestamp.split("T")[0];
-
-  const dateMinusOneDay = new Date(
-    new Date(date).getTime() - 24 * 60 * 60 * 1000,
-  ).toISOString().split("T")[0];
-
   console.log(`Fetching news with pageSize: ${pageSize}`);
   const params = new URLSearchParams({
-    q: "bitcoin",
-    from: dateMinusOneDay,
-    to: date,
-    sortBy: "popularity",
     apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
-    language: "en",
     pageSize: pageSize.toString(),
+    country: "us",
   });
 
-  const response = await fetch(`https://newsapi.org/v2/everything?${params}`);
+  const response = await fetch(
+    `GET https://newsapi.org/v2/top-headlines${params}`,
+  );
   if (!response.ok) {
     throw new Error(`Failed to fetch news: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as TopHeadlinersResponse;
   console.log("Fetched news data:", data);
 
   const filteredArticles = data.articles.filter(
-    (article: any) => !existingTitles.includes(article.title),
+    (article: HeadlinerResponse) => !existingTitles.includes(article.title),
   );
 
-  return filteredArticles.map((article: any) => {
+  return filteredArticles.map((article: HeadlinerResponse): NewsItem => {
     const trimmedContent = article.content
       ? article.content.replace(/\s\[\+\d+\schars\]$/, "")
-      : null;
+      : "";
 
     return {
       title: article.title,
-      price_id: priceId, // Placeholder, will be set in the main function
+      price_id: priceId,
       content: trimmedContent,
       description: article.description,
       source: article.source.name,
@@ -97,61 +95,8 @@ async function fetchNewsFromAPI(
       timestamp: article.publishedAt,
       sentiment: determineSentiment(
         article.title,
-        article.description + trimmedContent,
+        article.description + (trimmedContent || ""),
       ),
     };
   });
-}
-
-export function determineSentiment(
-  title: string,
-  description: string,
-): "positive" | "neutral" | "negative" {
-  const text = (title + " " + description).toLowerCase();
-
-  const positiveWords = [
-    "up",
-    "rise",
-    "rising",
-    "gain",
-    "bull",
-    "bullish",
-    "growth",
-    "increase",
-    "soar",
-    "surge",
-    "good",
-    "positive",
-    "rally",
-  ];
-  const negativeWords = [
-    "down",
-    "fall",
-    "falling",
-    "drop",
-    "bear",
-    "bearish",
-    "crash",
-    "decline",
-    "decrease",
-    "bad",
-    "negative",
-    "dump",
-    "plunge",
-  ];
-
-  let positiveScore = 0;
-  let negativeScore = 0;
-
-  positiveWords.forEach((word) => {
-    if (text.includes(word)) positiveScore++;
-  });
-
-  negativeWords.forEach((word) => {
-    if (text.includes(word)) negativeScore++;
-  });
-
-  if (positiveScore > negativeScore) return "positive";
-  if (negativeScore > positiveScore) return "negative";
-  return "neutral";
 }

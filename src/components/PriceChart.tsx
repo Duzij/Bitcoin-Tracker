@@ -21,7 +21,6 @@ import {
   ExternalLink,
   TrendingUp,
 } from "lucide-react";
-import { useMantineTheme } from "@mantine/core";
 
 interface PriceChartProps {
   data: BitcoinPrice[];

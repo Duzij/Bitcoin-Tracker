@@ -1,5 +1,5 @@
 import { DateRange } from "../types";
-import { Calendar, Search, X } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface DateRangeFilterProps {
   dateRange: DateRange;
