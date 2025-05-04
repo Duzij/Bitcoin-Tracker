@@ -10,8 +10,8 @@ function App() {
   const [bitcoinPrices, setBitcoinPrices] = useState<BitcoinPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({
-    start: null,
-    end: null
+    start: new Date(new Date().setDate(new Date().getDate() - 7)),
+    end: new Date(),
   });
 
   useEffect(() => {
