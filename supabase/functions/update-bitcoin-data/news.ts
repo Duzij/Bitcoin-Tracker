@@ -17,7 +17,7 @@ export async function fetchNews(
     let pageSize = 1;
 
     console.log(
-      `Fetching news for ${timestamp} with percent change: ${percentChange}`,
+      `Fetching ${requiredNewsCount} news for percent change: ${percentChange}`,
     );
 
     while (fetchedNews.length < requiredNewsCount) {
@@ -67,7 +67,7 @@ async function fetchNewsFromAPI(
   });
 
   const response = await fetch(
-    `GET https://newsapi.org/v2/top-headlines${params}`,
+    `https://newsapi.org/v2/top-headlines${params}`,
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch news: ${response.statusText}`);
