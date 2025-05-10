@@ -84,7 +84,7 @@ const ActiveCustomDot = (props: any) => {
   if (!cx || !cy) return null;
 
   const hasNews = payload.has_news;
-  
+
   return (
     <Dot
       cx={cx}
@@ -95,7 +95,7 @@ const ActiveCustomDot = (props: any) => {
       className={`timeline-dot`}
     />
   );
-}
+};
 
 const CustomDot = (props: any) => {
   const { cx, cy, payload } = props;
@@ -103,7 +103,7 @@ const CustomDot = (props: any) => {
   if (!cx || !cy) return null;
 
   const hasNews = payload.has_news;
-  
+
   return (
     <Dot
       cx={cx}
@@ -117,20 +117,21 @@ const CustomDot = (props: any) => {
 
 const SentimentBadge = ({ sentiment }: { sentiment: string }) => {
   const colors = {
-    positive:
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    positive: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
     negative: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
     neutral: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
   };
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        colors[sentiment as keyof typeof colors]
-      }`}
-    >
-      {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
-    </span>
+    sentiment === "" ? null : (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          colors[sentiment as keyof typeof colors]
+        }`}
+      >
+        {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+      </span>
+    )
   );
 };
 
@@ -253,7 +254,7 @@ const PriceChart = ({ data }: PriceChartProps) => {
               dataKey="price"
               stroke="#f7931a"
               strokeWidth={2}
-              activeDot={<ActiveCustomDot/>}
+              activeDot={<ActiveCustomDot />}
               dot={<CustomDot />}
             />
           </LineChart>

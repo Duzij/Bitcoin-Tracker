@@ -16,7 +16,7 @@ export interface NewsEvent {
   url: string;
   timestamp: string;
   price_id: number;
-  sentiment: 'positive' | 'neutral' | 'negative';
+  sentiment: 'positive' | 'neutral' | 'negative' | 'none';
 }
 
 export interface DateRange {

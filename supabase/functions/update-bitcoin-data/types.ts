@@ -7,7 +7,7 @@ export interface NewsItem {
   source: string;
   url: string;
   timestamp: string;
-  sentiment: "positive" | "neutral" | "negative";
+  sentiment: "positive" | "neutral" | "negative" | "none";
 }
 
 export interface BitcoinPrice {
