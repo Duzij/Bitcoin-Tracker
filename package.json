@@ -22,6 +22,7 @@
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
       "recharts": "^2.7.2",
+      "supabase": "^2.22.12",
       "vite-plugin-checker": "^0.9.1"
    },
    "devDependencies": {
