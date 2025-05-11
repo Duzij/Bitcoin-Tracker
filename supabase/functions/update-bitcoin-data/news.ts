@@ -6,7 +6,7 @@ export async function fetchNews(
   percentChange: number,
   priceId: number,
   existingTitles: string[],
-  lastPostedDate: string,
+  lastPostedDate: Date,
 ): Promise<NewsItem[]> {
   try {
     const requiredNewsCount = getRequiredNumberOfArticles(
@@ -47,11 +47,11 @@ export async function fetchNews(
 // If the last posted date is more than 2 days are, we need to fetch 1
 function getRequiredNumberOfArticles(
   percentChange: number,
-  lastPostedDate: string,
+  lastPostedDate: Date,
 ): number {
   const isLastPostedTwoDaysAgo =
-    new Date(lastPostedDate).getTime() < Date.now() - 2 * 24 * 60 * 60 * 1000;
-  return Math.abs(percentChange) > 5 ? 3 : isLastPostedTwoDaysAgo ? 1 : 0;
+    lastPostedDate.getTime() < Date.now() - 1 * 24 * 60 * 60 * 1000;
+  return Math.abs(percentChange) > 5 ? 5 : isLastPostedTwoDaysAgo ? 3 : 0;
 }
 
 async function fetchNewsFromAPI(
@@ -67,7 +67,7 @@ async function fetchNewsFromAPI(
   });
 
   const response = await fetch(
-    `https://newsapi.org/v2/top-headlines${params}`,
+    `https://newsapi.org/v2/top-headlines?${params}`,
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch news: ${response.statusText}`);

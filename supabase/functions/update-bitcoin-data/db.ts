@@ -54,7 +54,7 @@ export async function handleBitcoinPrice() {
             percentChange,
             priceId,
             existingNewsTitles,
-            lastTimestamp
+            new Date(lastTimestamp)
         );
         if (newsData && newsData.length > 0) {
             await supabaseClient.from("news_events").insert(newsData);
