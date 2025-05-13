@@ -27,10 +27,15 @@ export async function fetchNews(
         priceId,
       );
 
+      console.log(`Fetched ${newArticles.length} new articles`);
+
       // Add only unique articles to the fetchedNews list
       newArticles.forEach((article) => {
         if (!fetchedNews.some((news) => news.title === article.title)) {
           fetchedNews.push(article);
+          console.log(
+            `Added new article: ${article.title} - ${article.timestamp}`
+          );
         }
       });
 
@@ -74,7 +79,7 @@ async function fetchNewsFromAPI(
   }
 
   const data = await response.json() as TopHeadlinersResponse;
-  console.log("Fetched news data:", data);
+  console.log(`Fetched ${data.articles.length} news data from https://newsapi.org/v2/top-headlines?${params}`);
 
   const filteredArticles = data.articles.filter(
     (article: HeadlinerResponse) => !existingTitles.includes(article.title),
