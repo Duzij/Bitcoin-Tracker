@@ -2,7 +2,6 @@ import { determineSentiment } from "./helpers.ts";
 import { HeadlinerResponse, NewsItem, TopHeadlinersResponse } from "./types.ts";
 
 export async function fetchNews(
-  timestamp: string,
   percentChange: number,
   priceId: number,
   existingTitles: string[],
@@ -44,7 +43,7 @@ export async function fetchNews(
 
     return fetchedNews.slice(0, requiredNewsCount); // Return only the required number of news
   } catch (error) {
-    console.error(`Error fetching news for ${timestamp}:`, error);
+    console.error(`Error fetching news`, error);
     return [];
   }
 }

@@ -18,7 +18,7 @@ export async function handleBitcoinPrice() {
 
     const price = data.bitcoin.usd;
     const percentChange = data.bitcoin.usd_24h_change;
-    const timestamp = new Date().toISOString();
+    const timestampToday = new Date().toISOString();
 
     const lastInsertedPrice = await supabaseClient
         .from("bitcoin_prices")
@@ -27,14 +27,22 @@ export async function handleBitcoinPrice() {
         .limit(1)
         .single();
 
-    const lastTimestamp = lastInsertedPrice.data?.timestamp;
+    const lastNewsPosted = await supabaseClient
+        .from("news_events")
+        .select("timestamp")
+        .order("timestamp", { ascending: false })
+        .limit(1)
+        .single();
+
+    const lastTimestampPrice = lastInsertedPrice.data?.timestamp;
     const priceId = lastInsertedPrice.data?.id;
-    const isSameDay = timestamp.split("T")[0] === lastTimestamp?.split("T")[0];
+    const isSameDay = timestampToday.split("T")[0] === lastTimestampPrice?.split("T")[0];
+    const lastNewsPostedDate = new Date(lastNewsPosted.data?.timestamp ?? "");
 
     if (!isSameDay) {
         const { error: insertError } = await supabaseClient
             .from("bitcoin_prices")
-            .insert([{ price, percent_change: percentChange, timestamp }])
+            .insert([{ price, percent_change: percentChange, timestamp: timestampToday }])
             .select();
 
         if (insertError) {
@@ -50,12 +58,12 @@ export async function handleBitcoinPrice() {
         ) || [];
 
         const newsData = await fetchNews(
-            timestamp,
             percentChange,
             priceId,
             existingNewsTitles,
-            new Date(lastTimestamp)
+            lastNewsPostedDate,
         );
+
         if (newsData && newsData.length > 0) {
             await supabaseClient.from("news_events").insert(newsData);
         }
