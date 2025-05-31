@@ -1,7 +1,50 @@
 import { determineSentiment } from "./helpers.ts";
 import { HeadlinerResponse, NewsItem, TopHeadlinersResponse } from "./types.ts";
 
-export async function fetchNews(
+export async function fetchCryptoNews(
+  percentChange: number,
+  priceId: number,
+  existingTitles: string[],
+): Promise<NewsItem[]> {
+  try {
+    const requiredNewsCount = Math.abs(percentChange) > 5 ? 5 : 3;
+    const fetchedNews: NewsItem[] = [];
+    let pageSize = 1;
+
+    console.log(
+      `Fetching ${requiredNewsCount} crypto news for percent change: ${percentChange}`,
+    );
+
+    while (fetchedNews.length < requiredNewsCount) {
+      const newArticles = await fetchCryptoNewsFromAPI(
+        pageSize,
+        existingTitles,
+        priceId,
+      );
+
+      console.log(`Fetched ${newArticles.length} new articles`);
+
+      // Add only unique articles to the fetchedNews list
+      newArticles.forEach((article) => {
+        if (!fetchedNews.some((news) => news.title === article.title)) {
+          fetchedNews.push(article);
+          console.log(
+            `Added new article: ${article.title} - ${article.timestamp}`,
+          );
+        }
+      });
+
+      pageSize += 2; // Increase pageSize for the next attempt
+    }
+
+    return fetchedNews.slice(0, requiredNewsCount); // Return only the required number of news
+  } catch (error) {
+    console.error(`Error fetching crypto news`, error);
+    return [];
+  }
+}
+
+export async function fetchGlobalNews(
   percentChange: number,
   priceId: number,
   existingTitles: string[],
@@ -20,7 +63,7 @@ export async function fetchNews(
     );
 
     while (fetchedNews.length < requiredNewsCount) {
-      const newArticles = await fetchNewsFromAPI(
+      const newArticles = await fetchGlobalNewsFromAPI(
         pageSize,
         existingTitles,
         priceId,
@@ -33,7 +76,7 @@ export async function fetchNews(
         if (!fetchedNews.some((news) => news.title === article.title)) {
           fetchedNews.push(article);
           console.log(
-            `Added new article: ${article.title} - ${article.timestamp}`
+            `Added new article: ${article.title} - ${article.timestamp}`,
           );
         }
       });
@@ -58,7 +101,7 @@ function getRequiredNumberOfArticles(
   return Math.abs(percentChange) > 5 ? 5 : isLastPostedTwoDaysAgo ? 3 : 0;
 }
 
-async function fetchNewsFromAPI(
+async function fetchGlobalNewsFromAPI(
   pageSize: number,
   existingTitles: string[],
   priceId: number,
@@ -78,7 +121,9 @@ async function fetchNewsFromAPI(
   }
 
   const data = await response.json() as TopHeadlinersResponse;
-  console.log(`Fetched ${data.articles.length} news data from https://newsapi.org/v2/top-headlines?${params}`);
+  console.log(
+    `Fetched ${data.articles.length} news data from https://newsapi.org/v2/top-headlines?${params}`,
+  );
 
   const filteredArticles = data.articles.filter(
     (article: HeadlinerResponse) => !existingTitles.includes(article.title),
@@ -101,6 +146,65 @@ async function fetchNewsFromAPI(
         article.title,
         article.description + (trimmedContent || ""),
       ),
+      type: 0,
+    };
+  });
+}
+
+async function fetchCryptoNewsFromAPI(
+  pageSize: number,
+  existingTitles: string[],
+  priceId: number,
+) {
+  const date = new Date().toISOString().split("T")[0];
+
+  const dateMinusOneDay = new Date(
+    new Date(date).getTime() - 24 * 60 * 60 * 1000,
+  ).toISOString().split("T")[0];
+
+  console.log(`Fetching crypto news with pageSize: ${pageSize}`);
+  const params = new URLSearchParams({
+    q: "bitcoin",
+    from: dateMinusOneDay,
+    to: date,
+    sortBy: "popularity",
+    apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
+    language: "en",
+    pageSize: pageSize.toString(),
+  });
+
+  const response = await fetch(`https://newsapi.org/v2/everything?${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch news: ${response.statusText}`);
+  }
+
+  const data = await response.json() as TopHeadlinersResponse;
+  console.log(
+    `Fetched ${data.articles.length} news data from https://newsapi.org/v2/everything?${params}`,
+  );
+
+  const filteredArticles = data.articles.filter(
+    (article: HeadlinerResponse) => !existingTitles.includes(article.title) && article.description,
+  );
+
+  return filteredArticles.map((article: HeadlinerResponse): NewsItem => {
+    const trimmedContent = article.content
+      ? article.content.replace(/\s\[\+\d+\schars\]$/, "")
+      : "";
+
+    return {
+      title: article.title,
+      price_id: priceId,
+      content: trimmedContent,
+      description: article.description || "",
+      source: article.source.name,
+      url: article.url,
+      timestamp: article.publishedAt,
+      sentiment: determineSentiment(
+        article.title,
+        article.description + (trimmedContent || ""),
+      ),
+      type: 1,
     };
   });
 }

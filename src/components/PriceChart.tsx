@@ -15,12 +15,10 @@ import { BitcoinPrice, NewsEvent } from "../types";
 import { fetchNewsForPrice } from "../services/api";
 import { format } from "date-fns";
 import {
-  AlertCircle,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  TrendingUp,
 } from "lucide-react";
+import NewsComponent from "./NewsComponent";
 
 interface PriceChartProps {
   data: BitcoinPrice[];
@@ -112,61 +110,6 @@ const CustomDot = (props: any) => {
       strokeWidth={hasNews ? 2 : 0}
       className={`timeline-dot`}
     />
-  );
-};
-
-const SentimentBadge = ({ sentiment }: { sentiment: string }) => {
-  const colors = {
-    positive: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-    negative: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-    neutral: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-  };
-
-  return (
-    sentiment === "" ? null : (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          colors[sentiment as keyof typeof colors]
-        }`}
-      >
-        {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
-      </span>
-    )
-  );
-};
-
-const NewsItem = ({ news }: { news: NewsEvent }) => {
-  return (
-    <div
-      className={`news-item-${news.sentiment} p-4 mb-4 bg-white dark:bg-gray-800 rounded-lg shadow`}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold">{news.title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <SentimentBadge sentiment={news.sentiment} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {format(new Date(news.timestamp), "MMM dd, yyyy")}
-            </span>
-          </div>
-        </div>
-      </div>
-      <p className="text-sm mb-3">{news.description}</p>
-      <div className="flex justify-between items-center text-xs mt-2">
-        <span className="text-gray-500 dark:text-gray-400">
-          Source: {news.source}
-        </span>
-        <a
-          href={news.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-bitcoin-primary hover:underline flex items-center"
-        >
-          Read More
-          <ExternalLink size={12} className="ml-1" />
-        </a>
-      </div>
-    </div>
   );
 };
 
@@ -291,42 +234,11 @@ const PriceChart = ({ data }: PriceChartProps) => {
             </div>
           </div>
 
-          {activePrice.has_news
-            ? (
-              <>
-                <h3 className="text-lg font-semibold mb-3 flex items-center">
-                  <TrendingUp size={18} className="mr-2" />
-                  Related News Events
-                </h3>
-
-                {loading
-                  ? (
-                    <div className="flex justify-center p-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bitcoin-primary">
-                      </div>
-                    </div>
-                  )
-                  : newsEvents.length > 0
-                  ? (
-                    <div className="space-y-4">
-                      {newsEvents.map((news) => (
-                        <NewsItem key={news.id} news={news} />
-                      ))}
-                    </div>
-                  )
-                  : (
-                    <div className="text-center p-4 text-gray-500 dark:text-gray-400">
-                      No news events found for this date.
-                    </div>
-                  )}
-              </>
-            )
-            : (
-              <div className="flex items-center justify-center p-4 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 rounded">
-                <AlertCircle size={18} className="mr-2" />
-                No news events available for this price point
-              </div>
-            )}
+          <NewsComponent
+            hasNews={activePrice.has_news || newsEvents.length > 0}
+            loading={loading}
+            newsEvents={newsEvents}
+          />
         </div>
       )}
     </div>

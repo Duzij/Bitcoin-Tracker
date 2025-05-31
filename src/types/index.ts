@@ -17,6 +17,7 @@ export interface NewsEvent {
   timestamp: string;
   price_id: number;
   sentiment: 'positive' | 'neutral' | 'negative' | 'none';
+  type: number; // 0 for global news, 1 for crypto news
 }
 
 export interface DateRange {

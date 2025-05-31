@@ -8,6 +8,7 @@ export interface NewsItem {
   url: string;
   timestamp: string;
   sentiment: "positive" | "neutral" | "negative" | "none";
+  type: number; // 0 for global news, 1 for crypto news
 }
 
 export interface BitcoinPrice {
