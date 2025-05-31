@@ -93,10 +93,7 @@ abstract class NewsFetcher {
         source: article.source.name,
         url: article.url,
         timestamp: article.publishedAt,
-        sentiment: determineSentiment(
-          article.title,
-          article.description + (trimmedContent || ""),
-        ),
+        sentiment: determineSentiment(article.title),
         type: this.type,
       };
     });
@@ -112,6 +109,7 @@ export class CryptoNewsFetcher extends NewsFetcher {
     to: new Date().toISOString().split("T")[0],
     sortBy: "popularity",
     apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
+    language: "en"
   });
   type = NewsType.Crypto;
 }
@@ -121,7 +119,7 @@ export class GlobalNewsFetcher extends NewsFetcher {
   params = new URLSearchParams({
     apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
     pageSize: "1",
-    country: "us",
+    language: "en"
   });
   type = NewsType.Global;
 }
