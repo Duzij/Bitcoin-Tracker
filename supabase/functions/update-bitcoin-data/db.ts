@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { fetchCryptoNews, fetchGlobalNews as fetchGlobalNews } from "./news.ts";
+import { NewsItem } from "./types.ts";
+import { GlobalNewsFetcher, CryptoNewsFetcher } from "./news.ts";
 
 const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -62,44 +63,45 @@ export async function handleBitcoinPrice() {
             news.title as string
         ) || [];
 
-        const globalNewsData = await fetchGlobalNews(
+        const globalFetcher = new GlobalNewsFetcher();
+        const globalNewsData = await globalFetcher.fetchNews(
             percentChange,
             priceId,
             existingNewsTitles,
             lastNewsPostedDate,
         );
-        if (globalNewsData && globalNewsData.length > 0) {
-            console.log(
-                `Inserting ${globalNewsData.length} global news articles for price ID: ${priceId}`,
-                globalNewsData,
-            );
-            await supabaseClient.from("news_events").insert(globalNewsData);
-        }
+        await InsertNews(globalNewsData);
 
-        const cryptoNewsData = await fetchCryptoNews(
+        const cryptoFetcher = new CryptoNewsFetcher();
+        const cryptoNewsData = await cryptoFetcher.fetchNews(
             percentChange,
             priceId,
             existingNewsTitles,
+            lastNewsPostedDate,
         );
-        if (cryptoNewsData && cryptoNewsData.length > 0) {
-            console.log(
-                `Inserting ${cryptoNewsData.length} crypto news articles for price ID: ${priceId}`,
-                cryptoNewsData,
-            );
-            await supabaseClient.from("news_events").insert(cryptoNewsData)
-                .then((result) => {
-                    if (result.error) {
-                        console.error(
-                            "Error inserting crypto news articles:",
-                            result.error,
-                        );
-                    } else {
-                        console.log(
-                            "Crypto news articles inserted successfully:",
-                            result.data,
-                        );
-                    }
-                });
-        }
+        await InsertNews(cryptoNewsData);
     }
+
+async function InsertNews(news: NewsItem[]) {
+  if (news && news.length > 0) {
+    console.log(
+      `Inserting ${news.length} news articles for price ID: ${priceId}`,
+      news
+    );
+    await supabaseClient.from("news_events").insert(news)
+      .then((result) => {
+        if (result.error) {
+          console.error(
+            "Error inserting news articles:",
+            result.error
+          );
+        } else {
+          console.log(
+            "News articles inserted successfully:",
+            result.data
+          );
+        }
+      });
+  }
+}
 }

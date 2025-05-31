@@ -17,13 +17,13 @@ export interface BitcoinPrice {
   timestamp: string;
 }
 
-export interface TopHeadlinersResponse {
+export interface NewsEndpointResponse {
   status: string;
   totalResults: number;
-  articles: HeadlinerResponse[];
+  articles: ArticleResponse[];
 }
 
-export interface HeadlinerResponse {
+export interface ArticleResponse {
   source: {
     id: string | null;
     name: string;

@@ -1,95 +1,5 @@
 import { determineSentiment } from "./helpers.ts";
-import { HeadlinerResponse, NewsItem, TopHeadlinersResponse } from "./types.ts";
-
-export async function fetchCryptoNews(
-  percentChange: number,
-  priceId: number,
-  existingTitles: string[],
-): Promise<NewsItem[]> {
-  try {
-    const requiredNewsCount = Math.abs(percentChange) > 5 ? 5 : 3;
-    const fetchedNews: NewsItem[] = [];
-    let pageSize = 1;
-
-    console.log(
-      `Fetching ${requiredNewsCount} crypto news for percent change: ${percentChange}`,
-    );
-
-    while (fetchedNews.length < requiredNewsCount) {
-      const newArticles = await fetchCryptoNewsFromAPI(
-        pageSize,
-        existingTitles,
-        priceId,
-      );
-
-      console.log(`Fetched ${newArticles.length} new articles`);
-
-      // Add only unique articles to the fetchedNews list
-      newArticles.forEach((article) => {
-        if (!fetchedNews.some((news) => news.title === article.title)) {
-          fetchedNews.push(article);
-          console.log(
-            `Added new article: ${article.title} - ${article.timestamp}`,
-          );
-        }
-      });
-
-      pageSize += 2; // Increase pageSize for the next attempt
-    }
-
-    return fetchedNews.slice(0, requiredNewsCount); // Return only the required number of news
-  } catch (error) {
-    console.error(`Error fetching crypto news`, error);
-    return [];
-  }
-}
-
-export async function fetchGlobalNews(
-  percentChange: number,
-  priceId: number,
-  existingTitles: string[],
-  lastPostedDate: Date,
-): Promise<NewsItem[]> {
-  try {
-    const requiredNewsCount = getRequiredNumberOfArticles(
-      percentChange,
-      lastPostedDate,
-    );
-    const fetchedNews: NewsItem[] = [];
-    let pageSize = 1;
-
-    console.log(
-      `Fetching ${requiredNewsCount} news for percent change: ${percentChange}`,
-    );
-
-    while (fetchedNews.length < requiredNewsCount) {
-      const newArticles = await fetchGlobalNewsFromAPI(
-        pageSize,
-        existingTitles,
-        priceId,
-      );
-
-      console.log(`Fetched ${newArticles.length} new articles`);
-
-      // Add only unique articles to the fetchedNews list
-      newArticles.forEach((article) => {
-        if (!fetchedNews.some((news) => news.title === article.title)) {
-          fetchedNews.push(article);
-          console.log(
-            `Added new article: ${article.title} - ${article.timestamp}`,
-          );
-        }
-      });
-
-      pageSize += 2; // Increase pageSize for the next attempt
-    }
-
-    return fetchedNews.slice(0, requiredNewsCount); // Return only the required number of news
-  } catch (error) {
-    console.error(`Error fetching news`, error);
-    return [];
-  }
-}
+import { ArticleResponse, NewsEndpointResponse, NewsItem } from "./types.ts";
 
 // If the last posted date is more than 2 days are, we need to fetch 1
 function getRequiredNumberOfArticles(
@@ -97,114 +7,121 @@ function getRequiredNumberOfArticles(
   lastPostedDate: Date,
 ): number {
   const isLastPostedTwoDaysAgo =
-    lastPostedDate.getTime() < Date.now() - 1 * 24 * 60 * 60 * 1000;
-  return Math.abs(percentChange) > 5 ? 5 : isLastPostedTwoDaysAgo ? 3 : 0;
+    lastPostedDate.getTime() < Date.now() - 2 * 24 * 60 * 60 * 1000;
+  return Math.abs(percentChange) > 4 ? 5 : isLastPostedTwoDaysAgo ? 3 : 0;
 }
 
-async function fetchGlobalNewsFromAPI(
-  pageSize: number,
-  existingTitles: string[],
-  priceId: number,
-): Promise<NewsItem[]> {
-  console.log(`Fetching news with pageSize: ${pageSize}`);
-  const params = new URLSearchParams({
-    apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
-    pageSize: pageSize.toString(),
-    country: "us",
-  });
+enum NewsType {
+  Global = 0,
+  Crypto = 1,
+}
 
-  const response = await fetch(
-    `https://newsapi.org/v2/top-headlines?${params}`,
-  );
-  if (!response.ok) {
-    throw new Error(`Failed to fetch news: ${response.statusText}`);
+abstract class NewsFetcher {
+  abstract type: NewsType;
+  abstract url: string;
+  abstract params: URLSearchParams;
+
+  public async fetchNews(
+    percentChange: number,
+    priceId: number,
+    existingTitles: string[],
+    lastPostedDate: Date,
+  ): Promise<NewsItem[]> {
+    try {
+      const requiredNewsCount = getRequiredNumberOfArticles(
+        percentChange,
+        lastPostedDate,
+      );
+      const fetchedNews: NewsItem[] = [];
+      let pageSize = 1;
+      while (fetchedNews.length < requiredNewsCount) {
+        const newArticles = await this.fetchNewsFromAPI(
+          pageSize,
+          existingTitles,
+          priceId,
+        );
+
+        newArticles.forEach((article) => {
+          if (!fetchedNews.some((news) => news.title === article.title)) {
+            fetchedNews.push(article);
+          }
+        });
+
+        pageSize += 2; // Increase pageSize for the next attempt
+      }
+
+      return fetchedNews.slice(0, requiredNewsCount); // Return only the required number of news
+    } catch (error) {
+      console.error(`Error fetching news`, error);
+      return [];
+    }
   }
 
-  const data = await response.json() as TopHeadlinersResponse;
-  console.log(
-    `Fetched ${data.articles.length} news data from https://newsapi.org/v2/top-headlines?${params}`,
-  );
+  private async fetchNewsFromAPI(
+    pageSize: number,
+    existingTitles: string[],
+    priceId: number,
+  ): Promise<NewsItem[]> {
+    this.params.set("pageSize", pageSize.toString());
+    const response = await fetch(`${this.url}?${this.params}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news: ${response.statusText}`);
+    }
 
-  const filteredArticles = data.articles.filter(
-    (article: HeadlinerResponse) => !existingTitles.includes(article.title),
-  );
+    const data = await response.json() as NewsEndpointResponse;
+    if (!data.articles || data.articles.length === 0) {
+      console.warn("No articles found in the response");
+      return [];
+    }
+    if (data.status !== "ok") {
+      throw new Error(`API returned an error: ${data}`);
+    }
+    const filteredArticles = data.articles.filter(
+      (article: ArticleResponse) => !existingTitles.includes(article.title),
+    );
 
-  return filteredArticles.map((article: HeadlinerResponse): NewsItem => {
-    const trimmedContent = article.content
-      ? article.content.replace(/\s\[\+\d+\schars\]$/, "")
-      : "";
+    return filteredArticles.map((article: ArticleResponse): NewsItem => {
+      const trimmedContent = article.content
+        ? article.content.replace(/\s\[\+\d+\schars\]$/, "")
+        : "";
 
-    return {
-      title: article.title,
-      price_id: priceId,
-      content: trimmedContent,
-      description: article.description,
-      source: article.source.name,
-      url: article.url,
-      timestamp: article.publishedAt,
-      sentiment: determineSentiment(
-        article.title,
-        article.description + (trimmedContent || ""),
-      ),
-      type: 0,
-    };
-  });
+      return {
+        title: article.title,
+        price_id: priceId,
+        content: trimmedContent,
+        description: article.description || "",
+        source: article.source.name,
+        url: article.url,
+        timestamp: article.publishedAt,
+        sentiment: determineSentiment(
+          article.title,
+          article.description + (trimmedContent || ""),
+        ),
+        type: this.type,
+      };
+    });
+  }
 }
 
-async function fetchCryptoNewsFromAPI(
-  pageSize: number,
-  existingTitles: string[],
-  priceId: number,
-) {
-  const date = new Date().toISOString().split("T")[0];
-
-  const dateMinusOneDay = new Date(
-    new Date(date).getTime() - 24 * 60 * 60 * 1000,
-  ).toISOString().split("T")[0];
-
-  console.log(`Fetching crypto news with pageSize: ${pageSize}`);
-  const params = new URLSearchParams({
+export class CryptoNewsFetcher extends NewsFetcher {
+  url = "https://newsapi.org/v2/everything";
+  params = new URLSearchParams({
     q: "bitcoin",
-    from: dateMinusOneDay,
-    to: date,
+    from:
+      new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    to: new Date().toISOString().split("T")[0],
     sortBy: "popularity",
     apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
-    language: "en",
-    pageSize: pageSize.toString(),
   });
+  type = NewsType.Crypto;
+}
 
-  const response = await fetch(`https://newsapi.org/v2/everything?${params}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch news: ${response.statusText}`);
-  }
-
-  const data = await response.json() as TopHeadlinersResponse;
-  console.log(
-    `Fetched ${data.articles.length} news data from https://newsapi.org/v2/everything?${params}`,
-  );
-
-  const filteredArticles = data.articles.filter(
-    (article: HeadlinerResponse) => !existingTitles.includes(article.title) && article.description,
-  );
-
-  return filteredArticles.map((article: HeadlinerResponse): NewsItem => {
-    const trimmedContent = article.content
-      ? article.content.replace(/\s\[\+\d+\schars\]$/, "")
-      : "";
-
-    return {
-      title: article.title,
-      price_id: priceId,
-      content: trimmedContent,
-      description: article.description || "",
-      source: article.source.name,
-      url: article.url,
-      timestamp: article.publishedAt,
-      sentiment: determineSentiment(
-        article.title,
-        article.description + (trimmedContent || ""),
-      ),
-      type: 1,
-    };
+export class GlobalNewsFetcher extends NewsFetcher {
+  url = "https://newsapi.org/v2/top-headlines";
+  params = new URLSearchParams({
+    apiKey: Deno.env.get("NEWS_API_KEY") ?? "",
+    pageSize: "1",
+    country: "us",
   });
+  type = NewsType.Global;
 }
