@@ -42,14 +42,19 @@ export async function handleBitcoinPrice() {
     const lastNewsPostedDate = new Date(lastNewsPosted.data?.timestamp ?? "");
 
     if (!isSameDay) {
-        const { error: insertError } = await supabaseClient
+        const { data: insertedRows, error: insertError } = await supabaseClient
             .from("bitcoin_prices")
-            .insert([{
-                price,
-                percent_change: percentChange,
-                timestamp: timestampToday,
-            }])
+            .insert([
+                {
+                    price,
+                    percent_change: percentChange,
+                    timestamp: timestampToday,
+                },
+            ])
             .select();
+        
+        // Get the priceId from the inserted row
+        const newPriceId = insertedRows && insertedRows.length > 0 ? insertedRows[0].id : undefined;
 
         if (insertError) {
             throw insertError;
@@ -66,7 +71,7 @@ export async function handleBitcoinPrice() {
         const globalFetcher = new GlobalNewsFetcher();
         const globalNewsData = await globalFetcher.fetchNews(
             percentChange,
-            priceId,
+            newPriceId,
             existingNewsTitles,
             lastNewsPostedDate,
         );
